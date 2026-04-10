@@ -1,94 +1,69 @@
-# DDS Waveform Generator - Sine, Square & Sawtooth  
-**HacktheChip26 | Level 1**
+# DDS Waveform Generator – Sine, Square & Sawtooth  
+**HacktheChip26 | Level 1**  
+**Team: Photon**
 
-We are a 3-member team working on the problem:  
-**"Waveform Generator: DDS sine, square, and sawtooth wave generation"**  
-on a bare FPGA board (Pynq-Z2) with only 2 laptops and **no external DAC**.
+### What We Built
+We were given the task to create a **Direct Digital Synthesis (DDS)** waveform generator that can produce **Sine, Square, and Sawtooth** waves on the Pynq-Z2 board. Since we only had 2 laptops among 3 members and no external DAC, we had to be smart with our approach.
 
-### What We Did
-Started from TinyDDS and extended it to fully meet the problem statement.
+We started with the open-source TinyDDS project and spent the whole day modifying it to fully match the problem statement.
 
-**Main Achievements:**
-- Clean generation of **Sine, Square, and Sawtooth** waves using DDS
-- Added `wave_select` to switch between the three waveforms
-- Used **quarter-wave symmetry** for sine (64-entry LUT) → saves ~75% Block RAM
-- Added **first-order Delta-Sigma modulator** so we can generate analog output using only one GPIO pin (no DAC needed)
-- Fully working simulation with clean waveforms visible
+### Key Things We Added / Improved
+- Proper `wave_select` input so we can switch between Sine, Square, and Sawtooth
+- Quarter-wave symmetry for the sine LUT (reduced from 256 to 64 entries → ~75% BRAM saving)
+- Three clean outputs: `clean_sine`, `clean_square`, `clean_sawtooth` (always visible in simulation)
+- First-order Delta-Sigma modulator to generate analog-like signal using only one GPIO pin (no DAC needed)
+- Fixed two bugs using property-based testing (Delta-Sigma convergence and quarter-wave mirroring)
+- Clean testbench and `run.do` that shows all three waveforms nicely in ModelSim
 
-### Block Diagrams
+### Current Status (as of 10th April 2026)
+- Simulation is working well in ModelSim
+- All 5 property tests are passing
+- We can clearly see clean Sine, Square, and Sawtooth waveforms + the Delta-Sigma PDM output
+- Design is ready to be synthesized and tested on the Pynq-Z2 board
 
-**1. Overall Architecture**
-Clock (100 MHz)
-│
-▼
-Phase Accumulator (28-bit)
-│
-┌───────────┼───────────┐
-│           │           │
-Clean Sine    Clean Square   Clean Sawtooth
-│           │           │
-└───────────┼───────────┘
-▼
-Wave Select Mux
-│
-Selected Waveform
-│
-▼
-Delta-Sigma Modulator
-│
-▼
-PDM Output (to GPIO)
-text**2. Sine Wave Generation (Quarter-Wave Optimization)**
-Phase Accumulator Output
-│
-▼
-Top 2 bits → Quadrant Selector (Q1/Q2/Q3/Q4)
-│
-Lower bits → Address (64-entry ROM)
-│
-Forward / Backward addressing + Conditional Negate
-│
-▼
-Clean Sine Wave (8-bit)
-text**3. Delta-Sigma Modulator (No DAC Solution)**
-Selected Waveform (8-bit)
-│
-▼
-Accumulator (9-bit) += Input
-│
-▼
-MSB (Carry) → PDM Output (1-bit high-speed stream)
-(On board: Parasitic capacitance of pin + probe acts as simple low-pass filter)
-text### How to Run Simulation (ModelSim)
+### How to Run Simulation (ModelSim)
 
-```tcl
-cd "D:/Projects/hackathon-projects/waveform-generator/WaveformDDS/src"
+1. Open ModelSim
+2. Go to the src folder:
+   ```tcl
+   cd "D:/Projects/hackathon-projects/waveform-generator/WaveformDDS/src"
 
-restart -f
-log -r *
-add wave -r *
-do run.do
-In the Wave window:
+3. Run:
+  tclrestart -f
+  log -r *
+  add wave -r *
+  do run.do
+In the wave window you will see:
 
-Right-click clean_sine → Format → Analog → Radix Signed
-Right-click clean_square & clean_sawtooth → Format → Analog → Radix Unsigned
+Clean Sine wave
+Clean Square wave
+Clean Sawtooth wave
+Selected output (follows wave_select)
+Delta-Sigma PDM bitstream
 
-You will clearly see all three waveforms + the Delta-Sigma bitstream.
-Team Work (With Only 2 Laptops)
+Block Diagrams
+Overall Flow:
+textClock → Phase Accumulator → [Clean Sine | Clean Square | Clean Sawtooth] 
+                          → Wave Select Mux → Selected Waveform 
+                          → Delta-Sigma Modulator → PDM Output (GPIO)
+Sine Wave Part (Quarter-Wave):
+Phase bits → Quadrant detection → Address adjustment + negate → 64-entry ROM → Clean Sine
+What We Learned Today
 
-Two members handled coding, debugging, and simulation
-One member (without laptop) did math (sine table generation, FTW calculations), verification, documentation, and slides
+How DDS actually works (phase accumulator + LUT)
+Quarter-wave symmetry trick to save resources
+Delta-Sigma modulation for DAC-less output
+Importance of property testing (it caught two real bugs!)
+Working as a team with limited laptops
 
-We caught and fixed two bugs using property-based testing:
+Next Steps (Level 2)
 
-Delta-Sigma convergence issue
-Quarter-wave mirroring off-by-one error
+Synthesize the design in Vivado/Quartus for Pynq-Z2
+Generate bitstream
+Test real output on GPIO pin using oscilloscope
+Improve control using Python on Pynq if time permits
 
-Current Status
-
-Simulation fully polished and working
-All three waveforms clearly visible
-Ready for Pynq-Z2 hardware implementation (next round)
-
-Repository: https://github.com/NITHISH-2006/WaveformDDS (branch: dev-hack)
-We took a lightweight open-source base and customized it under tight constraints (time, laptops, no DAC) to solve the exact problem statement. Looking forward to bringing it live on the Pynq-Z2 board!
+Repository
+https://github.com/NITHISH-2006/WaveformDDS (dev-hack branch)
+We started this project today from scratch and managed to get a working simulation with all three waveforms + Delta-Sigma in one day. It was intense but we learned a lot.
+— Team Photon
