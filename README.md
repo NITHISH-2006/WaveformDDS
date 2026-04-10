@@ -1,54 +1,94 @@
-# TinyDDS
+# DDS Waveform Generator - Sine, Square & Sawtooth  
+**HacktheChip26 | Level 1**
 
-<img src="./schematic.png" width="700" height="268">
+We are a 3-member team working on the problem:  
+**"Waveform Generator: DDS sine, square, and sawtooth wave generation"**  
+on a bare FPGA board (Pynq-Z2) with only 2 laptops and **no external DAC**.
 
-This repository contains a Direct Digital Synthesis module in Verilog. It can generate sinus, ramp, square and prng data. I want to use this design on Tiny Tapeout TT05. This README contains some explanation about the design and how to use it. The code is quite simple.
+### What We Did
+Started from TinyDDS and extended it to fully meet the problem statement.
 
-As usual, we first generate a phase ramp. The slope of this ramp defines the frequency of the output. After this ramp, we translate this phase to a sinus value. In this design, I use a small read-only memory. I added a gain, offset and saturation. After that, the output of the design is muxed between multiple data.
+**Main Achievements:**
+- Clean generation of **Sine, Square, and Sawtooth** waves using DDS
+- Added `wave_select` to switch between the three waveforms
+- Used **quarter-wave symmetry** for sine (64-entry LUT) → saves ~75% Block RAM
+- Added **first-order Delta-Sigma modulator** so we can generate analog output using only one GPIO pin (no DAC needed)
+- Fully working simulation with clean waveforms visible
 
-## Hierarchy
+### Block Diagrams
 
-- tt_um_tinydds.v
-  - sync_async_reset.v
-  - synchronizer.v
-  - dds_top.v
-    - spi_slave_interface.v
-    - dds.v
-      - prng.v
+**1. Overall Architecture**
+Clock (100 MHz)
+│
+▼
+Phase Accumulator (28-bit)
+│
+┌───────────┼───────────┐
+│           │           │
+Clean Sine    Clean Square   Clean Sawtooth
+│           │           │
+└───────────┼───────────┘
+▼
+Wave Select Mux
+│
+Selected Waveform
+│
+▼
+Delta-Sigma Modulator
+│
+▼
+PDM Output (to GPIO)
+text**2. Sine Wave Generation (Quarter-Wave Optimization)**
+Phase Accumulator Output
+│
+▼
+Top 2 bits → Quadrant Selector (Q1/Q2/Q3/Q4)
+│
+Lower bits → Address (64-entry ROM)
+│
+Forward / Backward addressing + Conditional Negate
+│
+▼
+Clean Sine Wave (8-bit)
+text**3. Delta-Sigma Modulator (No DAC Solution)**
+Selected Waveform (8-bit)
+│
+▼
+Accumulator (9-bit) += Input
+│
+▼
+MSB (Carry) → PDM Output (1-bit high-speed stream)
+(On board: Parasitic capacitance of pin + probe acts as simple low-pass filter)
+text### How to Run Simulation (ModelSim)
 
-## Ressource usage
+```tcl
+cd "D:/Projects/hackathon-projects/waveform-generator/WaveformDDS/src"
 
-| LUT       | FF            | Block Memory bits | DSP Block            |
-| :-------: |:-------------:|:-----------------:|:--------------------:|
-| ~110      | ~200          | 1                 | 1                    |
+restart -f
+log -r *
+add wave -r *
+do run.do
+In the Wave window:
 
-**Target** :  Cyclone V<br>
-**Fmax**   : 140 MHz
+Right-click clean_sine → Format → Analog → Radix Signed
+Right-click clean_square & clean_sawtooth → Format → Analog → Radix Unsigned
 
-## SPI Slave Interface
+You will clearly see all three waveforms + the Delta-Sigma bitstream.
+Team Work (With Only 2 Laptops)
 
-This design also contains a SPI Slave Interface. This interface is used to configure the various registers of the design. It is a write-only interface since it doesn't have a MISO signal. It supports only 32b access. The most significant bit is transmitted first on the MOSI signal. The address of the register is on the bits [31:28]. This design samples the SPI_MOSI signal on the rising edge of the SPI_CLK signal.
+Two members handled coding, debugging, and simulation
+One member (without laptop) did math (sine table generation, FTW calculations), verification, documentation, and slides
 
-<img src="./spi_interface.png" width="687" height="305">
+We caught and fixed two bugs using property-based testing:
 
-| Address           | Register Name | Register content                                          |
-| :---------------: |:-------------:| :---------------------------------------------------------|
-| 4'h0              | CONTROL       | [1:0] Output mode (00=sinus; 01=ramp; 10=square; 11=prng) |
-| 4'h1              | REG_FREQ0     | [27:0] Frequency word 0                                   |
-| 4'h2              | REG_FREQ1     | [27:0] Frequency word 1                                   |
-| 4'h3              | REG_PHASE0    | [11:0] Phase Offset word 0                                |
-| 4'h4              | REG_PHASE1    | [11:0] Phase Offset word 1                                |
-| 4'h5              | REG_GAIN      | [7:0] Gain of the sinus output                            |
-| 4'h6              | REG_OFFSET    | [7:0] Offset of the sinus output                          |
-| Others            | No registers  | Not used                                                  |
+Delta-Sigma convergence issue
+Quarter-wave mirroring off-by-one error
 
-## Waves
+Current Status
 
-<img src="./ramp_to_sine_data.png" width="700" height="268">
+Simulation fully polished and working
+All three waveforms clearly visible
+Ready for Pynq-Z2 hardware implementation (next round)
 
-## Interesting links
-
-- [Analog Devices - Ask The Application Engineer—33: All About Direct Digital Synthesis](https://www.analog.com/en/analog-dialogue/articles/all-about-direct-digital-synthesis.html)
-- [Analog Devices - A Technical Tutorial on Digital Signal Synthesis, 1999](https://www.analog.com/en/education/education-library/technical-tutorial-dds.html)
-- [Analog Devices - MT-085 Fundamentals of Direct Digital Synthesis (DDS)](https://www.analog.com/media/en/training-seminars/tutorials/MT-085.pdf)
-- [Analog Devices - AD9833, 12.65 mW, 2.3 V to 5.5 V, Low Power Programmable Waveform Generator](https://www.analog.com/media/en/technical-documentation/data-sheets/ad9833.pdf)
+Repository: https://github.com/NITHISH-2006/WaveformDDS (branch: dev-hack)
+We took a lightweight open-source base and customized it under tight constraints (time, laptops, no DAC) to solve the exact problem statement. Looking forward to bringing it live on the Pynq-Z2 board!
