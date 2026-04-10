@@ -1,14 +1,25 @@
 // dds.v
 //
+// Direct Digital Synthesis module with quarter-wave sine ROM,
+// quadrant reconstruction, and wave_select output mux.
+//
+// Output frequency: F_out = FTW x F_clk / 2^28
+// where F_clk is the system clock frequency.
+//
+// wave_select encoding:
+//   2'b00 = Sine (gain/offset adjusted)
+//   2'b01 = Square (MSB of phase accumulator -> 0xFF or 0x00)
+//   2'b10 = Sawtooth (upper 8 bits of phase accumulator)
+//   2'b11 = PRNG / noise
 
 `default_nettype none
 
 module dds (
-    
+
     // Clock and reset
     input  wire        clk,
     input  wire        rst_n,
-    
+
     // Registers
     input  wire [27:0] register_freq0,
     input  wire [27:0] register_freq1,
@@ -16,12 +27,20 @@ module dds (
     input  wire [11:0] register_phase1,
     input  wire        fselect,
     input  wire        pselect,
-    input  wire [1:0]  register_mode,
+    input  wire [1:0]  register_mode,   // retained for backward compatibility
     input  wire [7:0]  register_gain,
     input  wire signed [7:0]  register_offset,
 
-    // DDS Output
-    output reg [7:0]   dds_output
+    // Waveform select (supersedes register_mode for output mux)
+    input  wire [1:0]  wave_select,
+
+    // DDS Output (muxed, selected by wave_select)
+    output reg [7:0]   dds_output,
+
+    // Clean individual waveform outputs (always active, for simulation visibility)
+    output wire [7:0]  clean_sine,
+    output wire [7:0]  clean_square,
+    output wire [7:0]  clean_sawtooth
 
 );
 
@@ -57,22 +76,41 @@ module dds (
     end
 
     /////////////////////////////////////////////////////////////////////////////
-    // Sin Read Only Memory /////////////////////////////////////////////////////
+    // Quarter-Wave Sine ROM + Quadrant Reconstruction //////////////////////////
     /////////////////////////////////////////////////////////////////////////////
 
-    reg signed  [7:0] sine_data;
-
-    reg [7:0] sine_memory [0:255];
+    reg signed [7:0] sine_quarter_memory [0:63];
     initial begin
         $display("Loading rom.");
-        $readmemh("sine.mem", sine_memory);
+        $readmemh("sine_quarter.mem", sine_quarter_memory);
     end
 
-    // Compute the sine of our phase
+    // Quadrant and address extraction
+    wire [1:0] quadrant;
+    wire [5:0] rom_addr;
+    assign quadrant = phase_accumulator_post_offset[11:10];
+    assign rom_addr = phase_accumulator_post_offset[9:4];
+
+    // Mirrored address: quadrants 01 and 11 use (64 - rom_addr), clamped to 63 when rom_addr=0
+    // This correctly maps Q1/Q3 to the descending half of the quarter-wave ROM.
+    wire [5:0] effective_addr;
+    assign effective_addr = (quadrant[0]) ? (rom_addr ? (6'd64 - rom_addr) : 6'd63) : rom_addr;
+
+    // ROM output
+    wire signed [7:0] rom_data;
+    assign rom_data = sine_quarter_memory[effective_addr];
+
+    reg signed [7:0] sine_data;
+
+    // Register reconstructed sine on rising clock edge
+    // Quadrants 10 and 11 negate via 2's complement: ~rom_data + 1
     always @(posedge clk) begin
-        sine_data = sine_memory[phase_accumulator_post_offset[11:4]];
+        if (quadrant[1])
+            sine_data <= (~rom_data + 8'sd1);
+        else
+            sine_data <= rom_data;
     end
-    
+
     /////////////////////////////////////////////////////////////////////////////
     // Gain & Offset Stage //////////////////////////////////////////////////////
     /////////////////////////////////////////////////////////////////////////////
@@ -120,7 +158,7 @@ module dds (
     /////////////////////////////////////////////////////////////////////////////
     // Pseudorandom Number Generator (PRNG) /////////////////////////////////////
     /////////////////////////////////////////////////////////////////////////////
-    
+
     wire [7:0] prng_data;
 
     prng inst_prng (
@@ -135,25 +173,29 @@ module dds (
     );
 
     /////////////////////////////////////////////////////////////////////////////
+    // Clean individual waveform outputs (always active) ////////////////////////
+    /////////////////////////////////////////////////////////////////////////////
+
+    assign clean_sine     = sine_data_post_offset_satured;
+    assign clean_square   = {8{phase_accumulator[27]}};
+    assign clean_sawtooth = phase_accumulator_trunc[11:4];
+
+    /////////////////////////////////////////////////////////////////////////////
     // Mux output data //////////////////////////////////////////////////////////
     /////////////////////////////////////////////////////////////////////////////
 
-    // We select the data to ouput with the register_mode
-    //
-    // Here is how register_mode works :
-    //  - "00" = Sine data
-    //  - "01" = Phase ramp
-    //  - "10" = Sine MSB
-    //  - "11" = Pseudorandom Number
+    // wave_select encoding:
+    //   2'b00 = Sine (gain/offset adjusted)
+    //   2'b01 = Square wave (phase_accumulator MSB -> 0xFF or 0x00)
+    //   2'b10 = Sawtooth (upper 8 bits of phase accumulator)
+    //   2'b11 = PRNG / noise
     always @(*) begin
-        if (register_mode == 0)
-            dds_output <= sine_data_post_offset_satured;
-        else if (register_mode == 1)
-            dds_output <= phase_accumulator_trunc;
-        else if (register_mode == 1)
-            dds_output <= sine_data[7];
-        else
-            dds_output <= prng_data;
+        case (wave_select)
+            2'b00:   dds_output = sine_data_post_offset_satured;
+            2'b01:   dds_output = {8{phase_accumulator[27]}};
+            2'b10:   dds_output = phase_accumulator_trunc[11:4];
+            default: dds_output = prng_data;
+        endcase
     end
 
 endmodule

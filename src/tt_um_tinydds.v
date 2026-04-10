@@ -56,13 +56,22 @@ module tt_um_tinydds #( parameter MAX_COUNT = 10_000_000 ) (
     wire fselect          = ui_in_clk[3];
     wire pselect          = ui_in_clk[4];
 
+    // Waveform select: 2'b00=sine, 2'b01=square, 2'b10=sawtooth, 2'b11=PRNG
+    wire [1:0] wave_select = ui_in_clk[6:5];
+
     // Output
     wire [7:0] dds_output;
     assign uo_out         = dds_output;
-    
-    // Unused
-    assign uio_oe         = "00000000";
-    assign uio_out        = "00000000";
+
+    // Delta-Sigma PDM output
+    wire pdm_out;
+    assign uio_out        = {7'b0, pdm_out};
+    assign uio_oe         = 8'b0000_0001;
+
+    // Clean waveform outputs (simulation visibility only — not routed to pins)
+    wire [7:0] clean_sine;
+    wire [7:0] clean_square;
+    wire [7:0] clean_sawtooth;
 
     /////////////////////////////////////////////////////////////////////////////
     // DDS //////////////////////////////////////////////////////////////////////
@@ -83,8 +92,19 @@ module tt_um_tinydds #( parameter MAX_COUNT = 10_000_000 ) (
         .fselect(fselect),
         .pselect(pselect),
 
+        // Waveform select
+        .wave_select(wave_select),
+
         // DDS outputs
-        .dds_output(dds_output)
+        .dds_output(dds_output),
+
+        // Clean individual waveform outputs
+        .clean_sine(clean_sine),
+        .clean_square(clean_square),
+        .clean_sawtooth(clean_sawtooth),
+
+        // Delta-Sigma PDM output
+        .pdm_out(pdm_out)
 
     );
 

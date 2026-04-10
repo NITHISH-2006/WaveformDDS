@@ -1,0 +1,213 @@
+m255
+K4
+z2
+13
+!s112 1.1
+!i10d 8192
+!i10e 25
+!i10f 100
+cModel Technology
+Z0 dD:/Projects/hackathon-projects/waveform-generator/WaveformDDS/src
+vdds
+Z1 !s110 1775816808
+!i10b 1
+!s100 CP_EnLEf6Hj[kE_eI`1BB1
+IOaWaL?hgO[TI@@fDZ:dAD3
+Z2 VDg1SIo80bB@j0V0VzS_@n1
+R0
+w1775816363
+8dds.v
+Fdds.v
+L0 17
+Z3 OV;L;10.5b;63
+r1
+!s85 0
+31
+Z4 !s108 1775816808.000000
+!s107 dds.v|
+!s90 -reportprogress|300|dds.v|
+!i113 1
+Z5 tCvgOpt 0
+vdds_top
+R1
+!i10b 1
+!s100 PYFc4b?kNFm0oNA`jO;@61
+IzW<0[ZJoL6QjBz`czZdHM1
+R2
+R0
+w1775816382
+8dds_top.v
+Fdds_top.v
+L0 7
+R3
+r1
+!s85 0
+31
+R4
+!s107 dds_top.v|
+!s90 -reportprogress|300|dds_top.v|
+!i113 1
+R5
+vdelta_sigma
+R1
+!i10b 1
+!s100 ?MkAb[`1c@HlBchEE02Ta2
+I61IB2ZhDPO=IGD=MjzMeE0
+R2
+R0
+w1775809709
+8delta_sigma.v
+Fdelta_sigma.v
+L0 14
+R3
+r1
+!s85 0
+31
+R4
+!s107 delta_sigma.v|
+!s90 -reportprogress|300|delta_sigma.v|
+!i113 1
+R5
+vprng
+R1
+!i10b 1
+!s100 B:Si@I:m3A=a9[m^K<=^h0
+I]C4[5mFRDK[3FSgBXDWg`3
+R2
+R0
+Z6 w1775802190
+8prng.v
+Fprng.v
+L0 6
+R3
+r1
+!s85 0
+31
+R4
+!s107 prng.v|
+!s90 -reportprogress|300|prng.v|
+!i113 1
+R5
+vspi_slave_interface
+R1
+!i10b 1
+!s100 @A3;^T@Nbc1A_GzH^`Zbf2
+I_dzzb490?e9kUc0za6_bY2
+R2
+R0
+R6
+8spi_slave_interface.v
+Fspi_slave_interface.v
+L0 6
+R3
+r1
+!s85 0
+31
+!s108 1775816807.000000
+!s107 spi_slave_interface.v|
+!s90 -reportprogress|300|spi_slave_interface.v|
+!i113 1
+R5
+vsync_async_reset
+R1
+!i10b 1
+!s100 PZgOB:ej11YTAWZDoT`SM2
+I:YCMhWHCTi:8YIi`J:kdP1
+R2
+R0
+w1775812999
+8sync_async_reset.v
+Fsync_async_reset.v
+L0 4
+R3
+r1
+!s85 0
+31
+R4
+!s107 sync_async_reset.v|
+!s90 -reportprogress|300|sync_async_reset.v|
+!i113 1
+R5
+vsynchronizer
+R1
+!i10b 1
+!s100 N_:6lhOhaSbeSK6=j1]IG0
+IAF5i=^i[M6HcMTI?_FRcJ3
+R2
+R0
+R6
+8synchronizer.v
+Fsynchronizer.v
+L0 25
+R3
+r1
+!s85 0
+31
+R4
+!s107 synchronizer.v|
+!s90 -reportprogress|300|synchronizer.v|
+!i113 1
+R5
+Etestbench
+Z7 w1775816440
+Z8 DPx4 ieee 15 std_logic_arith 0 22 [G314=:2zXJ`VORJe1J@Z1
+Z9 DPx4 ieee 18 std_logic_unsigned 0 22 ;eZjO2D4ZDz<]0>8AL<ne1
+Z10 DPx3 std 6 textio 0 22 zE1`LPoLg^DX3Oz^4Fj1K3
+Z11 DPx4 ieee 14 std_logic_1164 0 22 eNV`TJ_GofJTzYa?f<@Oe1
+R0
+Z12 8testbench.vhd
+Z13 Ftestbench.vhd
+l0
+L8
+VHEXG5<QzTTZ11;Sk:AWDO3
+!s100 gkSgDA9SOeV:TIoj?ee4A0
+Z14 OV;C;10.5b;63
+32
+Z15 !s110 1775816809
+!i10b 1
+Z16 !s108 1775816809.000000
+Z17 !s90 -reportprogress|300|testbench.vhd|
+Z18 !s107 testbench.vhd|
+!i113 1
+Z19 tExplicit 1 CvgOpt 0
+Artl
+Z20 DPx7 verilog 8 vl_types 0 22 bmGnzhS4n>6F^Dki9hX>O3
+Z21 DEx4 work 13 tt_um_tinydds 0 22 Dg1SIo80bB@j0V0VzS_@n1
+R8
+R9
+R10
+R11
+Z22 DEx4 work 9 testbench 0 22 HEXG5<QzTTZ11;Sk:AWDO3
+l83
+L11
+V_]nNX3C8;[VPhNnk]llGi0
+!s100 keAZNXUR2DHGK1iDneFzI3
+R14
+32
+R15
+!i10b 1
+R16
+R17
+R18
+!i113 1
+R19
+vtt_um_tinydds
+R1
+!i10b 1
+!s100 Ce5ejD7OjXHXC[KWh[EIW1
+IQUeNn?E;1=GUY5nWEXn>60
+R2
+R0
+w1775816402
+8tt_um_tinydds.v
+Ftt_um_tinydds.v
+L0 6
+R3
+r1
+!s85 0
+31
+R4
+!s107 tt_um_tinydds.v|
+!s90 -reportprogress|300|tt_um_tinydds.v|
+!i113 1
+R5
